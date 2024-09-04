@@ -5,7 +5,9 @@ services:
       - "2181:2181"
 
   kafka:
-    image: wurstmeister/kafka:2.13-2.8.1  # Updated to a newer version
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: kafka
+    container_name: kafka
     ports:
       - "9092:9092"
     environment:
@@ -15,10 +17,11 @@ services:
     depends_on:
       - zookeeper
     healthcheck:
-      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "kafka:9092" ]
+      test: ["CMD", "/bin/bash", "-c", "kafka-broker-api-versions --bootstrap-server localhost:9092 --version"]
       interval: 10s
-      timeout: 5s
-      retries: 100
+      timeout: 10s
+      retries: 5
+
 
   mongodb:
     image: mongo:5.0  # Updated to a more recent stable version
@@ -31,7 +34,7 @@ services:
       test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
       interval: 10s
       timeout: 5s
-      retries: 100
+      retries: 5
 
   neo4j:
     image: neo4j:4.4.12  # Updated to a more recent version
@@ -44,10 +47,11 @@ services:
     volumes:
       - neo4j-data:/data
     healthcheck:
-      test: ["CMD", "curl", "-sS", "http://localhost:7474"]
-      interval: 30s
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "test", "RETURN 1"]
+      interval: 10s
       timeout: 10s
-      retries: 100
+      retries: 10
+
 
 
   redis:
@@ -59,7 +63,7 @@ services:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
-      retries: 100
+      retries: 5
 
   fastapi:
     build: .
